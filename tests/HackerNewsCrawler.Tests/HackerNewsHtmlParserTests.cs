@@ -3,6 +3,7 @@ using HackerNewsCrawler.Api.Scraping;
 
 namespace HackerNewsCrawler.Tests;
 
+[Trait("Category", "Unit")]
 public class HackerNewsHtmlParserTests
 {
     private readonly HackerNewsHtmlParser parser = new();
@@ -28,8 +29,9 @@ public class HackerNewsHtmlParserTests
             .Replace("42 points", " 42\t points ")
             .Replace("athing submission", "extra  athing   submission");
 
-        Assert.Equal(1, parser.Parse(html)[0].CommentCount);
-        Assert.Equal(42, parser.Parse(html)[0].Points);
+        var entry = parser.Parse(html)[0];
+        Assert.Equal(1, entry.CommentCount);
+        Assert.Equal(42, entry.Points);
     }
 
     [Fact]
@@ -48,8 +50,9 @@ public class HackerNewsHtmlParserTests
     {
         var html = Fixture().Replace("<a href=\"item?id=101\">12&nbsp;comments</a>", "");
 
-        Assert.Equal(0, parser.Parse(html)[0].CommentCount);
-        Assert.Equal(42, parser.Parse(html)[0].Points);
+        var entry = parser.Parse(html)[0];
+        Assert.Equal(0, entry.CommentCount);
+        Assert.Equal(42, entry.Points);
     }
 
     [Fact]

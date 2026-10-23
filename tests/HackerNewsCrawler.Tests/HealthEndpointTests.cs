@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace HackerNewsCrawler.Tests;
 
+[Trait("Category", "Integration")]
 public class HealthEndpointTests
 {
     [Fact]

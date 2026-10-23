@@ -2,6 +2,7 @@ using HackerNewsCrawler.Api.Filtering;
 
 namespace HackerNewsCrawler.Tests;
 
+[Trait("Category", "Unit")]
 public class TitleWordCounterTests
 {
     [Theory]

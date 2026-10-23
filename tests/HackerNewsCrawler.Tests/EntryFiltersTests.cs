@@ -3,6 +3,7 @@ using HackerNewsCrawler.Api.Models;
 
 namespace HackerNewsCrawler.Tests;
 
+[Trait("Category", "Unit")]
 public class EntryFiltersTests
 {
     private static HackerNewsEntry[] Entries() =>
@@ -41,8 +42,6 @@ public class EntryFiltersTests
         var shortTitles = EntryFilters.ApplyFilterB(entries);
 
         Assert.Equal(original, entries);
-        Assert.Equal(entries.Length, longTitles.Count + shortTitles.Count);
-        Assert.Empty(longTitles.Intersect(shortTitles));
         Assert.Equal(original.OrderBy(entry => entry.Rank),
             longTitles.Concat(shortTitles).OrderBy(entry => entry.Rank));
     }
