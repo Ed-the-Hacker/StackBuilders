@@ -1,9 +1,46 @@
 <main>
-  <p class="eyebrow">STACK BUILDERS CHALLENGE</p>
-  <h1>Hacker News Crawler</h1>
-  <p>Explore the first 30 stories on Hacker News.</p>
-  <section aria-labelledby="status-heading">
-    <h2 id="status-heading">Getting started</h2>
-    <p>The workspace is ready. Story retrieval and filtering will be added next.</p>
+  <header>
+    <div>
+      <p class="eyebrow">HACKER NEWS · FRONT PAGE</p>
+      <h1>Hacker News Explorer</h1>
+      <p class="intro">A simpler view of the stories people are talking about.</p>
+    </div>
+    <button class="refresh" (click)="load()" [disabled]="loading()">{{ loading() ? 'Loading…' : 'Refresh' }}</button>
+  </header>
+
+  <nav aria-label="Story views">
+    <button [attr.aria-pressed]="view() === 'all'" (click)="view.set('all')">All stories</button>
+    <button [attr.aria-pressed]="view() === 'a'" (click)="view.set('a')">Filter A</button>
+    <button [attr.aria-pressed]="view() === 'b'" (click)="view.set('b')">Filter B</button>
+  </nav>
+
+  <section aria-label="Stories" [attr.aria-busy]="loading()">
+    <div class="list-heading">
+      <p>{{ description() }}</p>
+      @if (data()) { <span>{{ entries().length }} stories</span> }
+    </div>
+    @if (loading()) {
+      <p class="notice" role="status">Loading stories from Hacker News…</p>
+    } @else if (error()) {
+      <div class="notice error" role="alert">
+        <p>{{ error() }}</p>
+        <button (click)="load()">Try again</button>
+      </div>
+    } @else if (entries().length === 0) {
+      <p class="notice" role="status">No stories match this view.</p>
+    } @else {
+      <ol class="stories">
+        @for (entry of entries(); track entry.rank) {
+          <li>
+            <span class="rank" [attr.aria-label]="'Rank ' + entry.rank">{{ entry.rank }}.</span>
+            <article>
+              <h2>{{ entry.title }}</h2>
+              <p class="metadata"><span>{{ entry.points }} points</span><span>{{ entry.commentCount }} comments</span></p>
+            </article>
+          </li>
+        }
+      </ol>
+    }
   </section>
+  <footer>Source: <a href="https://news.ycombinator.com/" target="_blank" rel="noopener noreferrer">Hacker News</a>. Refresh loads a new snapshot; switching views keeps the same stories.</footer>
 </main>

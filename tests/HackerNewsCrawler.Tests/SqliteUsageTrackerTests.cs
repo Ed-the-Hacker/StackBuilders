@@ -85,6 +85,26 @@ public class SqliteUsageTrackerTests : IDisposable
         return connection;
     }
 
+    [Fact]
+    public void RecordUsages_RollsBackBothFiltersIfSecondInsertFails()
+    {
+        var tracker = new SqliteUsageTracker(DatabasePath);
+        tracker.RecordUsage(FilterId.A, DateTimeOffset.UtcNow, 1);
+        using var connection = OpenDatabase();
+        using var command = connection.CreateCommand();
+        command.CommandText = """
+            CREATE TRIGGER RejectB BEFORE INSERT ON FilterUsage WHEN NEW.FilterId = 'B'
+            BEGIN SELECT RAISE(ABORT, 'Storage failure'); END;
+            """;
+        command.ExecuteNonQuery();
+
+        Assert.Throws<SqliteException>(() => tracker.RecordUsages(
+            new Dictionary<FilterId, int> { [FilterId.A] = 10, [FilterId.B] = 20 }, DateTimeOffset.UtcNow));
+
+        command.CommandText = "SELECT COUNT(*) FROM FilterUsage";
+        Assert.Equal(1L, command.ExecuteScalar());
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(directory))

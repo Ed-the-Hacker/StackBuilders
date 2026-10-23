@@ -22,10 +22,18 @@ public sealed class SqliteUsageTracker
     }
 
     public void RecordUsage(FilterId filterId, DateTimeOffset requestedAt, int resultCount)
+        => RecordUsages(new Dictionary<FilterId, int> { [filterId] = resultCount }, requestedAt);
+
+    public void RecordUsages(IReadOnlyDictionary<FilterId, int> usages, DateTimeOffset requestedAt)
     {
-        if (!Enum.IsDefined(filterId))
-            throw new ArgumentOutOfRangeException(nameof(filterId));
-        ArgumentOutOfRangeException.ThrowIfNegative(resultCount);
+        ArgumentNullException.ThrowIfNull(usages);
+        foreach (var (filterId, resultCount) in usages)
+        {
+            if (!Enum.IsDefined(filterId))
+                throw new ArgumentOutOfRangeException(nameof(usages));
+            ArgumentOutOfRangeException.ThrowIfNegative(resultCount);
+        }
+        if (usages.Count == 0) return;
 
         Directory.CreateDirectory(Path.GetDirectoryName(databasePath)!);
         using var connection = new SqliteConnection(connectionString);
@@ -44,16 +52,19 @@ public sealed class SqliteUsageTracker
             """;
         schema.ExecuteNonQuery();
 
-        using var insert = connection.CreateCommand();
-        insert.Transaction = transaction;
-        insert.CommandText = """
+        foreach (var (filterId, resultCount) in usages)
+        {
+            using var insert = connection.CreateCommand();
+            insert.Transaction = transaction;
+            insert.CommandText = """
             INSERT INTO FilterUsage (RequestedAtUtc, FilterId, ResultCount)
             VALUES ($requestedAt, $filterId, $resultCount);
             """;
-        insert.Parameters.AddWithValue("$requestedAt", requestedAt.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture));
-        insert.Parameters.AddWithValue("$filterId", filterId.ToString());
-        insert.Parameters.AddWithValue("$resultCount", resultCount);
-        insert.ExecuteNonQuery();
+            insert.Parameters.AddWithValue("$requestedAt", requestedAt.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture));
+            insert.Parameters.AddWithValue("$filterId", filterId.ToString());
+            insert.Parameters.AddWithValue("$resultCount", resultCount);
+            insert.ExecuteNonQuery();
+        }
         transaction.Commit();
     }
 }
