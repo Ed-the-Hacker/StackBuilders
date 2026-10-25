@@ -17,9 +17,9 @@ public class HackerNewsHtmlParserTests
         var entries = parser.Parse(Fixture());
 
         Assert.Equal(3, entries.Count);
-        Assert.Equal(new HackerNewsEntry(7, "C# & .NET: \"hello\" <world> é", 42, 12), entries[0]);
-        Assert.Equal(new HackerNewsEntry(9, "A self-explained example", 1, 0), entries[1]);
-        Assert.Equal(new HackerNewsEntry(15, "Hiring a developer", 0, 0), entries[2]);
+        Assert.Equal(new HackerNewsEntry(7, "C# & .NET: \"hello\" <world> é", 42, 12, "https://example.com/"), entries[0]);
+        Assert.Equal(new HackerNewsEntry(9, "A self-explained example", 1, 0, "https://example.com/second"), entries[1]);
+        Assert.Equal(new HackerNewsEntry(15, "Hiring a developer", 0, 0, "https://example.com/jobs"), entries[2]);
     }
 
     [Fact]
@@ -62,7 +62,7 @@ public class HackerNewsHtmlParserTests
 
         Assert.Equal(30, entries.Count);
         Assert.Equal(Enumerable.Range(1, 30), entries.Select(entry => entry.Rank));
-        Assert.Equal(new HackerNewsEntry(1, "Kimi K3.1 Pro and K3.1 Pro Highspeed", 607, 368), entries[0]);
+        Assert.Equal(new HackerNewsEntry(1, "Kimi K3.1 Pro and K3.1 Pro Highspeed", 607, 368, "https://www.kimi.ai/blog/kimi-k3-1-pro"), entries[0]);
         Assert.Equal("Total Historian", entries[^1].Title);
     }
 
@@ -138,5 +138,43 @@ public class HackerNewsHtmlParserTests
     public void Parse_RejectsNullHtml()
     {
         Assert.Throws<ArgumentNullException>(() => parser.Parse(null!));
+    }
+
+    [Theory]
+    [InlineData("https://example.org/story?q=hello&amp;page=2#section", "https://example.org/story?q=hello&page=2#section")]
+    [InlineData("http://example.org/story", "http://example.org/story")]
+    [InlineData("item?id=123", "https://news.ycombinator.com/item?id=123")]
+    [InlineData("/item?id=456", "https://news.ycombinator.com/item?id=456")]
+    [InlineData("//example.org/story", "https://example.org/story")]
+    public void Parse_ResolvesTitleUrls(string href, string expected)
+    {
+        var html = Fixture().Replace("href=\"https://example.com\"", $"href=\"{href}\"");
+
+        Assert.Equal(expected, parser.Parse(html)[0].Url);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("javascript:alert(1)")]
+    [InlineData("java&#x0A;script:alert(1)")]
+    [InlineData("data:text/html,test")]
+    [InlineData("file:///etc/passwd")]
+    [InlineData("mailto:person@example.com")]
+    [InlineData("https://")]
+    [InlineData("https://[invalid")]
+    [InlineData("not a valid url")]
+    public void Parse_RejectsInvalidOrUnsupportedTitleUrls(string href)
+    {
+        var html = Fixture().Replace("href=\"https://example.com\"", $"href=\"{href}\"");
+
+        Assert.Throws<FormatException>(() => parser.Parse(html));
+    }
+
+    [Fact]
+    public void Parse_RejectsMissingTitleUrl()
+    {
+        var html = Fixture().Replace("href=\"https://example.com\"", "");
+
+        Assert.Throws<FormatException>(() => parser.Parse(html));
     }
 }

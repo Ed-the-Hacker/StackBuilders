@@ -42,6 +42,8 @@ On Windows, use `npm.cmd` and `npx.cmd` if PowerShell blocks their script wrappe
 - **Filter B:** titles with five words or fewer, most points first.
 - **Refresh:** fetch a new homepage snapshot.
 
+Story titles open their HTTP/HTTPS destination in a new tab; relative links are resolved against Hacker News.
+
 Both filters break ties by ascending rank. The browser requests all entries and both filtered results together. Switching views reuses those results without another download or usage record. Initial loading and each refresh apply and record both filters.
 
 The API also supports individual selections:

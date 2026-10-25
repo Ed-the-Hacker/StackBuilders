@@ -6,6 +6,8 @@ namespace HackerNewsCrawler.Api.Scraping;
 
 public sealed class HackerNewsHtmlParser
 {
+    private static readonly Uri BaseUri = new("https://news.ycombinator.com/");
+
     public IReadOnlyList<HackerNewsEntry> Parse(string html)
     {
         ArgumentNullException.ThrowIfNull(html);
@@ -33,9 +35,12 @@ public sealed class HackerNewsHtmlParser
             if (rank == 0 || !ranks.Add(rank))
                 throw new FormatException($"Entry {id} has a zero or duplicate rank.");
 
-            var title = Text(row.SelectSingleNode($".//span[{HasClass("titleline")}]/a[1]"));
+            var titleLink = row.SelectSingleNode($".//span[{HasClass("titleline")}]/a[1]");
+            var title = Text(titleLink);
             if (string.IsNullOrWhiteSpace(title))
                 throw new FormatException($"Entry {id} has no title.");
+
+            var url = ParseUrl(titleLink!.GetAttributeValue("href", ""));
 
             // Only the immediately following row belongs to this entry.
             var metadataRow = row.SelectSingleNode("following-sibling::tr[1]");
@@ -67,7 +72,7 @@ public sealed class HackerNewsHtmlParser
                 comments = text == "discuss" ? 0 : ParseCount(text, "comment", "comments");
             }
 
-            entries.Add(new HackerNewsEntry(rank, title, points, comments));
+            entries.Add(new HackerNewsEntry(rank, title, points, comments, url));
         }
 
         return entries;
@@ -75,6 +80,18 @@ public sealed class HackerNewsHtmlParser
 
     private static string HasClass(string className) =>
         $"contains(concat(' ', normalize-space(@class), ' '), ' {className} ')";
+
+    private static string ParseUrl(string href)
+    {
+        href = HtmlEntity.DeEntitize(href).Trim();
+        if (string.IsNullOrWhiteSpace(href)
+            || !Uri.IsWellFormedUriString(href, UriKind.RelativeOrAbsolute)
+            || !Uri.TryCreate(BaseUri, href, out var url)
+            || (url.Scheme != Uri.UriSchemeHttp && url.Scheme != Uri.UriSchemeHttps))
+            throw new FormatException("An entry has an invalid or unsupported title URL.");
+
+        return url.AbsoluteUri;
+    }
 
     private static string Text(HtmlNode? node) =>
         string.Join(" ", HtmlEntity.DeEntitize(node?.InnerText ?? "")

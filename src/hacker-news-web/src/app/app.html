@@ -34,7 +34,7 @@
           <li>
             <span class="rank" [attr.aria-label]="'Rank ' + entry.rank">{{ entry.rank }}.</span>
             <article>
-              <h2>{{ entry.title }}</h2>
+              <h2><a [href]="entry.url" target="_blank" rel="noopener noreferrer">{{ entry.title }}</a></h2>
               <p class="metadata"><span>{{ entry.points }} points</span><span>{{ entry.commentCount }} comments</span></p>
             </article>
           </li>

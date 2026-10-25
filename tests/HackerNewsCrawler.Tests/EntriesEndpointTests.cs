@@ -34,6 +34,9 @@ public class EntriesEndpointTests : IDisposable
 
         Assert.True(response.Headers.CacheControl?.NoStore);
         Assert.Equal(30, data.Entries.Count);
+        Assert.Equal("https://www.kimi.ai/blog/kimi-k3-1-pro", data.Entries[0].Url);
+        Assert.All(data.FilterA ?? [], entry => Assert.Equal(data.Entries.Single(original => original.Rank == entry.Rank).Url, entry.Url));
+        Assert.All(data.FilterB ?? [], entry => Assert.Equal(data.Entries.Single(original => original.Rank == entry.Rank).Url, entry.Url));
         Assert.Equal(Enumerable.Range(1, 30), data.Entries.Select(entry => entry.Rank));
         Assert.Equal(filter is "a" or "both", data.FilterA is not null);
         Assert.Equal(filter is "b" or "both", data.FilterB is not null);

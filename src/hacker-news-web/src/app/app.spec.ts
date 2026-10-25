@@ -6,9 +6,9 @@ import { App } from './app';
 describe('App', () => {
   let fixture: ComponentFixture<App>;
   let http: HttpTestingController;
-  const first = { rank: 3, title: 'One two three four five six', points: 10, commentCount: 7 };
-  const second = { rank: 1, title: 'A short title', points: 30, commentCount: 2 };
-  const third = { rank: 2, title: 'Another title with more than five words', points: 5, commentCount: 10 };
+  const first = { rank: 3, title: 'One two three four five six', points: 10, commentCount: 7, url: 'https://example.com/first' };
+  const second = { rank: 1, title: 'A short title', points: 30, commentCount: 2, url: 'https://news.ycombinator.com/item?id=123' };
+  const third = { rank: 2, title: 'Another title with more than five words', points: 5, commentCount: 10, url: 'http://example.com/third' };
   const data = { entries: [first, second, third], filterA: [third, first], filterB: [second] };
 
   beforeEach(async () => {
@@ -74,6 +74,29 @@ describe('App', () => {
     fixture.detectChanges();
     expect((fixture.nativeElement as HTMLElement).querySelector('[role="status"]')?.textContent)
       .toContain('No stories match this view.');
+  });
+
+  it.each([
+    ['All stories', [first, second, third]],
+    ['Filter A', [third, first]],
+    ['Filter B', [second]]
+  ])('provides accessible title links in %s', (view, entries) => {
+    respond();
+    button(view).click();
+    fixture.detectChanges();
+    const links = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll<HTMLAnchorElement>('h2 a'));
+
+    expect(links.map(link => link.href)).toEqual(entries.map(entry => entry.url));
+    links.forEach((link, index) => {
+      expect(link.textContent).toBe(entries[index].title);
+      expect(link.target).toBe('_blank');
+      expect(link.relList.contains('noopener')).toBe(true);
+      expect(link.relList.contains('noreferrer')).toBe(true);
+      expect(link.tabIndex).toBe(0);
+      link.focus();
+      expect(document.activeElement).toBe(link);
+    });
+    http.expectNone('/api/entries?filter=both');
   });
 
   it('refreshes once and clears the previous snapshot while loading', () => {

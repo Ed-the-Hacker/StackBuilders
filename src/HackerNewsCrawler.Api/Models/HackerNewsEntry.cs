@@ -4,4 +4,5 @@ public sealed record HackerNewsEntry(
     int Rank,
     string Title,
     int Points,
-    int CommentCount);
+    int CommentCount,
+    string Url);

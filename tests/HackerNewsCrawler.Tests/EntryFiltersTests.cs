@@ -8,12 +8,12 @@ public class EntryFiltersTests
 {
     private static HackerNewsEntry[] Entries() =>
     [
-        new(8, "one two three four five six", 900, 10),
-        new(5, "one two three four five six seven", 1, 30),
-        new(2, "one two three four five six", 2, 30),
-        new(9, "one two three four five", 10, 900),
-        new(6, "This is - a self-explained example", 50, 1),
-        new(1, "Short title", 50, 2)
+        new(8, "one two three four five six", 900, 10, "https://example.com/story"),
+        new(5, "one two three four five six seven", 1, 30, "https://example.com/story"),
+        new(2, "one two three four five six", 2, 30, "https://example.com/story"),
+        new(9, "one two three four five", 10, 900, "https://example.com/story"),
+        new(6, "This is - a self-explained example", 50, 1, "https://example.com/story"),
+        new(1, "Short title", 50, 2, "https://example.com/story")
     ];
 
     [Fact]
@@ -56,14 +56,14 @@ public class EntryFiltersTests
     [Fact]
     public void Filters_ReturnEmptyResultsWhenNoTitleMatches()
     {
-        Assert.Empty(EntryFilters.ApplyFilterA([new(1, "Short", 0, 0)]));
-        Assert.Empty(EntryFilters.ApplyFilterB([new(1, "one two three four five six", 0, 0)]));
+        Assert.Empty(EntryFilters.ApplyFilterA([new(1, "Short", 0, 0, "https://example.com/story")]));
+        Assert.Empty(EntryFilters.ApplyFilterB([new(1, "one two three four five six", 0, 0, "https://example.com/story")]));
     }
 
     [Fact]
     public void FilterB_IncludesEmptyTitlesAndZeroScores()
     {
-        var entries = new[] { new HackerNewsEntry(2, "", 0, 0), new HackerNewsEntry(1, "-", 0, 0) };
+        var entries = new[] { new HackerNewsEntry(2, "", 0, 0, "https://example.com/story"), new HackerNewsEntry(1, "-", 0, 0, "https://example.com/story") };
 
         Assert.Equal(new[] { 1, 2 }, EntryFilters.ApplyFilterB(entries).Select(entry => entry.Rank));
     }

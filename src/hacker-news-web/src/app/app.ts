@@ -7,6 +7,7 @@ interface Entry {
   title: string;
   points: number;
   commentCount: number;
+  url: string;
 }
 
 interface EntriesResponse {
